@@ -38,13 +38,13 @@ class Generator(nn.Module):
         # nn.init.xavier_normal_(self.d_w2.weight)
         self.d_w3 = nn.Linear(h_dim, dim)
         # nn.init.xavier_normal_(self.d_w3.weight)
-        self.relu = nn.ReLU()
+        self.relu = nn.LeakyReLU()
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x, m):
         x = torch.cat([x, m], 1)
-        x = self.relu(self.d_w1(x))
-        x = self.relu(self.d_w2(x))
+        x = self.relu(self.d_w1(x) + torch.normal(0.0, 0.01, size=[1]))
+        x = self.relu(self.d_w2(x) + torch.normal(0.0, 0.01, size=[1]))
         x = self.sigmoid(self.d_w3(x))
         return x
 
@@ -58,7 +58,7 @@ class Discriminator(nn.Module):
         # nn.init.xavier_normal_(self.d_w2.weight)
         self.d_w3 = nn.Linear(h_dim, dim)
         # nn.init.xavier_normal_(self.d_w3.weight)
-        self.relu = nn.ReLU()
+        self.relu = nn.LeakyReLU()
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x, h):
@@ -109,8 +109,8 @@ def gain(data_x, gain_parameters):
 
     # Optimizers
     generator_optimizer = torch.optim.Adam(generator.parameters(), lr=0.0001)
-    discriminator_optimizer = torch.optim.Adam(discriminator.parameters(), lr=0.0001)
-    discriminator2_optimizer = torch.optim.Adam(discriminator.parameters(), lr=0.0001)
+    discriminator_optimizer = torch.optim.SGD(discriminator.parameters(), lr=0.0001)
+    discriminator2_optimizer = torch.optim.SGD(discriminator2.parameters(), lr=0.0001)
     for i in tqdm(range(iterations), desc='pytorch', file=sys.stdout):
         # Sample batch
         batch_idx = sample_batch_index(no, batch_size)
