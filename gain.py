@@ -105,10 +105,12 @@ def gain(data_x, gain_parameters):
     # pytorch.
     generator = Generator(dim, h_dim)
     discriminator = Discriminator(dim, h_dim)
+    discriminator2 = Discriminator(dim, h_dim)
 
     # Optimizers
-    generator_optimizer = torch.optim.Adam(generator.parameters(), lr=0.001)
-    discriminator_optimizer = torch.optim.Adam(discriminator.parameters(), lr=0.001)
+    generator_optimizer = torch.optim.Adam(generator.parameters(), lr=0.0001)
+    discriminator_optimizer = torch.optim.Adam(discriminator.parameters(), lr=0.0001)
+    discriminator2_optimizer = torch.optim.Adam(discriminator.parameters(), lr=0.0001)
     for i in tqdm(range(iterations), desc='pytorch', file=sys.stdout):
         # Sample batch
         batch_idx = sample_batch_index(no, batch_size)
@@ -117,8 +119,9 @@ def gain(data_x, gain_parameters):
         # Sample random vectors
         Z_mb = uniform_sampler(0, 0.01, batch_size, dim)
         # Sample hint vectors
-        H_mb_temp = binary_sampler(hint_rate, batch_size, dim)
-        H_mb = M_mb * H_mb_temp
+
+        H_mb = M_mb * binary_sampler(hint_rate, batch_size, dim)
+        H_mb_2 = M_mb * binary_sampler(hint_rate, batch_size, dim)
 
         # Combine random vectors with observed vectors
         X_mb = M_mb * X_mb + (1 - M_mb) * Z_mb
@@ -126,20 +129,29 @@ def gain(data_x, gain_parameters):
         X_mb = torch.Tensor(X_mb)
         M_mb = torch.Tensor(M_mb)
         H_mb = torch.Tensor(H_mb)
+        H_mb_2 = torch.Tensor(H_mb_2)
 
         G_sample = generator(X_mb, M_mb)
         Hat_X = X_mb * M_mb + G_sample * (1 - M_mb)
         D_prob = discriminator(Hat_X, H_mb)
+        D_prob2 = discriminator2(Hat_X, H_mb_2)
 
         d_loss_value = d_loss(M_mb, D_prob)
-        g_loss_value = g_loss(M_mb, D_prob, alpha, X_mb, G_sample)
+        d_loss_value2 = d_loss(M_mb, D_prob2)
+        y = torch.rand(1)
+        g_loss_value = g_loss(M_mb, y * D_prob + (1 - y) * D_prob2, alpha, X_mb, G_sample)
 
+        discriminator2_optimizer.zero_grad()
         discriminator_optimizer.zero_grad()
         generator_optimizer.zero_grad()
+
+        g_loss_value.backward(retain_graph=True)
         d_loss_value.backward(retain_graph=True)
-        g_loss_value.backward()
+        d_loss_value2.backward(retain_graph=True)
+
         generator_optimizer.step()
         discriminator_optimizer.step()
+        discriminator2_optimizer.step()
 
     ## Return imputed data
     Z_mb = uniform_sampler(0, 0.01, no, dim)
