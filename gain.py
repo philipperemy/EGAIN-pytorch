@@ -43,8 +43,10 @@ class Generator(nn.Module):
 
     def forward(self, x, m):
         x = torch.cat([x, m], 1)
-        x = self.relu(self.d_w1(x) + torch.normal(0.0, 0.01, size=[1]))
-        x = self.relu(self.d_w2(x) + torch.normal(0.0, 0.01, size=[1]))
+        x = self.relu(self.d_w1(x))
+        x += torch.normal(0.0, 0.01, size=x.shape)
+        x = self.relu(self.d_w2(x))
+        x += torch.normal(0.0, 0.01, size=x.shape)
         x = self.sigmoid(self.d_w3(x))
         return x
 
