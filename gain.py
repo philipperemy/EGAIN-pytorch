@@ -16,7 +16,7 @@ import torch
 from torch import nn
 from tqdm import tqdm
 
-from utils import binary_sampler, uniform_sampler, sample_batch_index
+from utils import binary_sampler, uniform_sampler, sample_batch_index, rmse_loss
 from utils import normalization, renormalization, rounding
 
 
@@ -71,7 +71,7 @@ class Discriminator(nn.Module):
         return x
 
 
-def gain(data_x, gain_parameters):
+def gain(data_x, gain_parameters, ori_data_x, train_index, test_index):
     '''Impute missing values in data_x
 
     Args:
@@ -79,7 +79,7 @@ def gain(data_x, gain_parameters):
       - gain_parameters: GAIN network parameters:
         - batch_size: Batch size
         - hint_rate: Hint rate
-        - alpha: Hyperparameter
+        - alpha: Hyper-parameter
         - iterations: Iterations
 
     Returns:
@@ -97,12 +97,14 @@ def gain(data_x, gain_parameters):
     # Other parameters
     no, dim = data_x.shape
 
+    no_train = len(train_index)
+
     # Hidden state dimensions
     h_dim = int(dim)
 
     # Normalization
     norm_data, norm_parameters = normalization(data_x)
-    norm_data_x = np.nan_to_num(norm_data, 0)
+    norm_data_x = np.nan_to_num(norm_data, nan=0)
 
     # pytorch.
     generator = Generator(dim, h_dim)
@@ -115,9 +117,9 @@ def gain(data_x, gain_parameters):
     discriminator2_optimizer = torch.optim.SGD(discriminator2.parameters(), lr=0.0001)
     for i in tqdm(range(iterations), desc='pytorch', file=sys.stdout):
         # Sample batch
-        batch_idx = sample_batch_index(no, batch_size)
-        X_mb = norm_data_x[batch_idx, :]
-        M_mb = data_m[batch_idx, :]
+        batch_idx = sample_batch_index(no_train, batch_size)
+        X_mb = norm_data_x[train_index][batch_idx, :]
+        M_mb = data_m[train_index][batch_idx, :]
         # Sample random vectors
         Z_mb = uniform_sampler(0, 0.01, batch_size, dim)
         # Sample hint vectors
@@ -155,7 +157,7 @@ def gain(data_x, gain_parameters):
         discriminator_optimizer.step()
         discriminator2_optimizer.step()
 
-    ## Return imputed data
+    # Return imputed data
     Z_mb = uniform_sampler(0, 0.01, no, dim)
     M_mb = data_m
     X_mb = norm_data_x
@@ -171,4 +173,7 @@ def gain(data_x, gain_parameters):
     # Rounding
     imputed_data = rounding(imputed_data, data_x)
 
-    return imputed_data
+    rmse = rmse_loss(ori_data_x[test_index], imputed_data[test_index], data_m[test_index])
+    rmse_full = rmse_loss(ori_data_x, imputed_data, data_m)
+    print(f'RMSE Performance: {rmse:.4f} (test), {rmse_full:.4f} (full).')
+    return rmse
