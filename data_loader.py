@@ -3,8 +3,10 @@
 
 # Necessary packages
 import numpy as np
-from utils import binary_sampler
 from keras.datasets import mnist
+from sklearn.datasets import load_breast_cancer
+
+from utils import binary_sampler
 
 
 def data_loader(data_name, miss_rate):
@@ -27,6 +29,14 @@ def data_loader(data_name, miss_rate):
     elif data_name == 'mnist':
         (data_x, _), _ = mnist.load_data()
         data_x = np.reshape(np.asarray(data_x), [60000, 28 * 28]).astype(float)
+    elif data_name == 'breast':
+        data_x = load_breast_cancer()['data']
+    elif data_name == 'news':
+        data_x = np.loadtxt('data/OnlineNewsPopularity1.csv', delimiter=",", skiprows=1)
+    elif data_name == 'credit':
+        data_x = np.loadtxt('data/default_of_credit_cards_clients.csv', delimiter=",", skiprows=2)
+    else:
+        raise Exception('Unknown dataset.')
 
     # Parameters
     no, dim = data_x.shape

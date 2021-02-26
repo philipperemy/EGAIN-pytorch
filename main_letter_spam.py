@@ -59,7 +59,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--data_name',
-        choices=['letter', 'spam'],
+        choices=['letter', 'spam', 'breast', 'news', 'credit'],
         default='spam',
         type=str)
     parser.add_argument(
