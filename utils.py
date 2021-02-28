@@ -13,9 +13,28 @@
 # Necessary packages
 import numpy as np
 
-
 # import tensorflow as tf
 ##IF USING TF 2 use following import to still use TF < 2.0 Functionalities
+from numpy import ma
+# noinspection PyUnresolvedReferences
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+
+
+def rmse_benchmarks(ori_data, data_m):
+    mask = ~np.array(data_m, dtype=bool)
+    a = np.array(ori_data)
+    a[mask] = np.nan
+    mean_imputed = np.where(np.isnan(a), ma.array(a, mask=np.isnan(a)).mean(axis=0), a)
+
+    ice_mean = IterativeImputer(random_state=0, max_iter=50, verbose=1)
+    ice_mean.fit(a)
+    ice_imputed_2 = ice_mean.transform(a)
+
+    mean_rmse = np.sqrt(np.mean((ori_data[mask] - mean_imputed[mask]) ** 2))
+    ice_rmse = np.sqrt(np.mean((ori_data[mask] - ice_imputed_2[mask]) ** 2))
+
+    return mean_rmse, ice_rmse
 
 
 def normalization(data, parameters=None):
@@ -126,13 +145,15 @@ def rmse_loss(ori_data, imputed_data, data_m):
     ori_data, norm_parameters = normalization(ori_data)
     imputed_data, _ = normalization(imputed_data, norm_parameters)
 
+    rmse_mean, rmse_mice = rmse_benchmarks(ori_data, data_m)
+
     # Only for missing values
     nominator = np.sum(((1 - data_m) * ori_data - (1 - data_m) * imputed_data) ** 2)
     denominator = np.sum(1 - data_m)
 
     rmse = np.sqrt(nominator / float(denominator))
 
-    return rmse
+    return rmse, rmse_mean, rmse_mice
 
 
 def binary_sampler(p, rows, cols):

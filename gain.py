@@ -1,6 +1,6 @@
 '''GAIN function.
 Date: 2020/02/28
-Reference: J. Yoon, J. Jordon, M. van der Schaar, "GAIN: Missing Data 
+Reference: J. Yoon, J. Jordon, M. van der Schaar, "GAIN: Missing Data
            Imputation using Generative Adversarial Nets," ICML, 2018.
 Paper Link: http://proceedings.mlr.press/v80/yoon18a/yoon18a.pdf
 Contact: jsyoon0823@gmail.com
@@ -115,7 +115,7 @@ def gain(data_x, gain_parameters, ori_data_x, train_index, test_index):
     generator_optimizer = torch.optim.Adam(generator.parameters(), lr=0.0001)
     discriminator_optimizer = torch.optim.SGD(discriminator.parameters(), lr=0.0001)
     discriminator2_optimizer = torch.optim.SGD(discriminator2.parameters(), lr=0.0001)
-    for i in tqdm(range(iterations), desc='pytorch', file=sys.stdout):
+    for i in tqdm(range(iterations), desc='pytorch'):
         # Sample batch
         batch_idx = sample_batch_index(no_train, batch_size)
         X_mb = norm_data_x[train_index][batch_idx, :]
@@ -173,7 +173,9 @@ def gain(data_x, gain_parameters, ori_data_x, train_index, test_index):
     # Rounding
     imputed_data = rounding(imputed_data, data_x)
 
-    rmse = rmse_loss(ori_data_x[test_index], imputed_data[test_index], data_m[test_index])
-    rmse_full = rmse_loss(ori_data_x, imputed_data, data_m)
+    rmse, rmse_mean, rmse_mice = rmse_loss(ori_data_x[test_index], imputed_data[test_index], data_m[test_index])
+    rmse_full, rmse_full_mean, rmse_full_mice = rmse_loss(ori_data_x, imputed_data, data_m)
+    print(f'RMSE Performance (mean): {rmse_mean:.4f} (test), {rmse_full_mean:.4f} (full).')
+    print(f'RMSE Performance (mice): {rmse_mice:.4f} (test), {rmse_full_mice:.4f} (full).')
     print(f'RMSE Performance: {rmse:.4f} (test), {rmse_full:.4f} (full).')
     return rmse
