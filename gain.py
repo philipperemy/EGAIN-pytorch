@@ -9,7 +9,6 @@ Contact: jsyoon0823@gmail.com
 # Necessary packages
 # import tensorflow as tf
 ##IF USING TF 2 use following import to still use TF < 2.0 Functionalities
-import sys
 
 import numpy as np
 import torch
@@ -44,9 +43,9 @@ class Generator(nn.Module):
     def forward(self, x, m):
         x = torch.cat([x, m], 1)
         x = self.relu(self.d_w1(x))
-        x += torch.normal(0.0, 0.01, size=x.shape)
+        # x += torch.normal(0.0, 0.01, size=x.shape)
         x = self.relu(self.d_w2(x))
-        x += torch.normal(0.0, 0.01, size=x.shape)
+        # x += torch.normal(0.0, 0.01, size=x.shape)
         x = self.sigmoid(self.d_w3(x))
         return x
 
@@ -116,6 +115,10 @@ def gain(data_x, gain_parameters, ori_data_x, train_index, test_index):
     discriminator_optimizer = torch.optim.SGD(discriminator.parameters(), lr=0.0001)
     discriminator2_optimizer = torch.optim.SGD(discriminator2.parameters(), lr=0.0001)
     for i in tqdm(range(iterations), desc='pytorch'):
+
+        if i % 1000 == 0:
+            test(data_m, data_x, dim, generator, no, norm_data_x, norm_parameters, ori_data_x, test_index)
+
         # Sample batch
         batch_idx = sample_batch_index(no_train, batch_size)
         X_mb = norm_data_x[train_index][batch_idx, :]
@@ -157,25 +160,21 @@ def gain(data_x, gain_parameters, ori_data_x, train_index, test_index):
         discriminator_optimizer.step()
         discriminator2_optimizer.step()
 
+
+def test(data_m, data_x, dim, generator, no, norm_data_x, norm_parameters, ori_data_x, test_index):
     # Return imputed data
     Z_mb = uniform_sampler(0, 0.01, no, dim)
     M_mb = data_m
     X_mb = norm_data_x
     X_mb = M_mb * X_mb + (1 - M_mb) * Z_mb
-
     imputed_data = generator(torch.Tensor(X_mb), torch.Tensor(M_mb)).detach().numpy()
-
     imputed_data = data_m * norm_data_x + (1 - data_m) * imputed_data
-
     # Renormalization
     imputed_data = renormalization(imputed_data, norm_parameters)
-
     # Rounding
     imputed_data = rounding(imputed_data, data_x)
-
-    rmse, rmse_mean, rmse_mice = rmse_loss(ori_data_x[test_index], imputed_data[test_index], data_m[test_index])
-    rmse_full, rmse_full_mean, rmse_full_mice = rmse_loss(ori_data_x, imputed_data, data_m)
+    rmse, rmse_mean = rmse_loss(ori_data_x[test_index], imputed_data[test_index], data_m[test_index])
+    rmse_full, rmse_full_mean = rmse_loss(ori_data_x, imputed_data, data_m)
     print(f'RMSE Performance (mean): {rmse_mean:.4f} (test), {rmse_full_mean:.4f} (full).')
-    print(f'RMSE Performance (mice): {rmse_mice:.4f} (test), {rmse_full_mice:.4f} (full).')
     print(f'RMSE Performance: {rmse:.4f} (test), {rmse_full:.4f} (full).')
     return rmse

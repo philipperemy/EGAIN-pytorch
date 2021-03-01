@@ -40,7 +40,7 @@ def main(args):
                        'iterations': args.iterations}
 
     # Load data and introduce missingness
-    ori_data_x, miss_data_x, data_m = data_loader(data_name, miss_rate)
+    ori_data_x, miss_data_x, data_m = data_loader(data_name, miss_rate, args.mechanism)
 
     # Impute missing data
     if args.kfold:
@@ -61,6 +61,11 @@ if __name__ == '__main__':
         '--data_name',
         choices=['letter', 'spam', 'breast', 'news', 'credit'],
         default='spam',
+        type=str)
+    parser.add_argument(
+        '--mechanism',
+        choices=['mcar', 'mar'],
+        default='mcar',
         type=str)
     parser.add_argument(
         '--miss_rate',
