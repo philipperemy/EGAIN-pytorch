@@ -1,14 +1,9 @@
-# Codebase for "Generative Adversarial Imputation Networks (GAIN)"
+# Generative Adversarial Imputation Networks (GAIN)
 
-Authors: Jinsung Yoon, James Jordon, Mihaela van der Schaar
+Pytorch implementation
 
-Paper: Jinsung Yoon, James Jordon, Mihaela van der Schaar, 
-"GAIN: Missing Data Imputation using Generative Adversarial Nets," 
-International Conference on Machine Learning (ICML), 2018.
- 
-Paper Link: http://proceedings.mlr.press/v80/yoon18a/yoon18a.pdf
+Refer to this [link](https://github.com/jsyoon0823/GAIN) for the official implementation in Tensorflow V1.
 
-Contact: jsyoon0823@gmail.com
 
 This directory contains implementations of GAIN framework for imputation
 using two UCI datasets.
@@ -34,12 +29,6 @@ discriminator model such as multi-layer perceptrons or CNNs.
 ### Example command
 
 ```shell
-$ python3 main_letter_spam.py --data_name spam 
---miss_rate: 0.2 --batch_size 128 --hint_rate 0.9 --alpha 100
---iterations 10000
+$ python3 main_letter_spam.py --data_name spam --miss_rate 0.2 --batch_size 128 --hint_rate 0.9 --alpha 100 --iterations 10000
 ```
 
-### Outputs
-
--   imputed_data_x: imputed data
--   rmse: Root Mean Squared Error
