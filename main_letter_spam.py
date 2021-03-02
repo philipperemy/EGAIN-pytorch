@@ -46,12 +46,12 @@ def main(args):
     if args.kfold:
         rmse_list = []
         for i, (train_index, test_index) in enumerate(KFold(shuffle=True, random_state=1).split(ori_data_x)):
-            rmse = gain(miss_data_x, gain_parameters, ori_data_x, train_index, test_index)
+            rmse = gain(miss_data_x, gain_parameters, ori_data_x, train_index, test_index, args.mechanism)
             rmse_list.append(rmse)
         print(np.mean(rmse_list), np.std(rmse_list))
     else:
         train_index = test_index = range(len(ori_data_x))
-        gain(miss_data_x, gain_parameters, ori_data_x, train_index, test_index)
+        gain(miss_data_x, gain_parameters, ori_data_x, train_index, test_index, args.mechanism)
 
 
 if __name__ == '__main__':
