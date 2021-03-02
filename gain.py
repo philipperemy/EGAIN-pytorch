@@ -15,7 +15,7 @@ import torch
 from torch import nn
 from tqdm import tqdm
 
-from utils import binary_sampler, uniform_sampler, sample_batch_index, rmse_loss
+from utils import binary_sampler, uniform_sampler, sample_batch_index, rmse_loss, hint_for_mar
 from utils import normalization, renormalization, rounding
 
 
@@ -70,7 +70,7 @@ class Discriminator(nn.Module):
         return x
 
 
-def gain(data_x, gain_parameters, ori_data_x, train_index, test_index):
+def gain(data_x, gain_parameters, ori_data_x, train_index, test_index, mechanism):
     '''Impute missing values in data_x
 
     Args:
@@ -111,13 +111,13 @@ def gain(data_x, gain_parameters, ori_data_x, train_index, test_index):
     discriminator2 = Discriminator(dim, h_dim)
 
     # Optimizers
-    generator_optimizer = torch.optim.Adam(generator.parameters(), lr=0.0001)
+    generator_optimizer = torch.optim.Adam(generator.parameters(), lr=0.0001, betas=(0.5, 0.999))
     discriminator_optimizer = torch.optim.SGD(discriminator.parameters(), lr=0.0001)
     discriminator2_optimizer = torch.optim.SGD(discriminator2.parameters(), lr=0.0001)
     for i in tqdm(range(iterations), desc='pytorch'):
 
-        if i % 1000 == 0:
-            test(data_m, data_x, dim, generator, no, norm_data_x, norm_parameters, ori_data_x, test_index)
+        # if i % 2000 == 0 and i != 0:
+        #     test(data_m, data_x, dim, generator, no, norm_data_x, norm_parameters, ori_data_x, test_index)
 
         # Sample batch
         batch_idx = sample_batch_index(no_train, batch_size)
@@ -127,8 +127,12 @@ def gain(data_x, gain_parameters, ori_data_x, train_index, test_index):
         Z_mb = uniform_sampler(0, 0.01, batch_size, dim)
         # Sample hint vectors
 
-        H_mb = M_mb * binary_sampler(hint_rate, batch_size, dim)
-        H_mb_2 = M_mb * binary_sampler(hint_rate, batch_size, dim)
+        if mechanism == 'mar':
+            H_mb = hint_for_mar(hint_rate, M_mb)  # np.logical_or(1 - h, 1 - mask)
+            H_mb_2 = hint_for_mar(hint_rate, M_mb)  # np.logical_or(1 - h, 1 - mask)
+        else:
+            H_mb = M_mb * binary_sampler(hint_rate, batch_size, dim)
+            H_mb_2 = M_mb * binary_sampler(hint_rate, batch_size, dim)
 
         # Combine random vectors with observed vectors
         X_mb = M_mb * X_mb + (1 - M_mb) * Z_mb
@@ -160,6 +164,8 @@ def gain(data_x, gain_parameters, ori_data_x, train_index, test_index):
         discriminator_optimizer.step()
         discriminator2_optimizer.step()
 
+    test(data_m, data_x, dim, generator, no, norm_data_x, norm_parameters, ori_data_x, test_index)
+
 
 def test(data_m, data_x, dim, generator, no, norm_data_x, norm_parameters, ori_data_x, test_index):
     # Return imputed data
@@ -176,5 +182,5 @@ def test(data_m, data_x, dim, generator, no, norm_data_x, norm_parameters, ori_d
     rmse, rmse_mean = rmse_loss(ori_data_x[test_index], imputed_data[test_index], data_m[test_index])
     rmse_full, rmse_full_mean = rmse_loss(ori_data_x, imputed_data, data_m)
     print(f'RMSE Performance (mean): {rmse_mean:.4f} (test), {rmse_full_mean:.4f} (full).')
-    print(f'RMSE Performance: {rmse:.4f} (test), {rmse_full:.4f} (full).')
+    # print(f'RMSE Performance: {rmse:.4f} (test), {rmse_full:.4f} (full).')
     return rmse
