@@ -11,11 +11,7 @@ using two UCI datasets.
 -   UCI Letter (https://archive.ics.uci.edu/ml/datasets/Letter+Recognition)
 -   UCI Spam (https://archive.ics.uci.edu/ml/datasets/Spambase)
 
-To run the pipeline for training and evaluation on GAIN framwork, simply run 
-python3 -m main_letter_spam.py.
-
-Note that any model architecture can be used as the generator and 
-discriminator model such as multi-layer perceptrons or CNNs. 
+Note that any model architecture can be used as the generator and discriminator model such as multi-layer perceptrons or CNNs. 
 
 ### Command inputs:
 
