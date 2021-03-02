@@ -149,8 +149,8 @@ def gain(data_x, gain_parameters, ori_data_x, train_index, test_index, mechanism
 
         d_loss_value = d_loss(M_mb, D_prob)
         d_loss_value2 = d_loss(M_mb, D_prob2)
-        y = torch.rand(1)
-        g_loss_value = g_loss(M_mb, y * D_prob + (1 - y) * D_prob2, alpha, X_mb, G_sample)
+        # y = torch.rand(1)
+        g_loss_value = g_loss(M_mb, 0.5 * D_prob + 0.5 * D_prob2, alpha, X_mb, G_sample)
 
         discriminator2_optimizer.zero_grad()
         discriminator_optimizer.zero_grad()
