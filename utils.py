@@ -35,7 +35,7 @@ def rmse_benchmarks(ori_data, data_m):
     mean_rmse = np.sqrt(np.mean((ori_data[mask] - mean_imputed[mask]) ** 2))
     # ice_rmse = np.sqrt(np.mean((ori_data[mask] - ice_imputed_2[mask]) ** 2))
 
-    return mean_rmse #, ice_rmse
+    return mean_rmse  # , ice_rmse
 
 
 def normalization(data, parameters=None):
@@ -155,6 +155,15 @@ def rmse_loss(ori_data, imputed_data, data_m):
     rmse = np.sqrt(nominator / float(denominator))
 
     return rmse, rmse_mean
+
+
+def hint_for_mar(p, mask):
+    m_indices = np.where(1 - mask)
+    h_indices = np.random.choice(range(len(m_indices[0])), size=int(p * len(m_indices[0])), replace=False)
+    hh_indices = m_indices[0][h_indices], m_indices[1][h_indices]
+    h = np.zeros_like(mask)
+    h[hh_indices] = 1
+    return 1 - h
 
 
 def binary_sampler(p, rows, cols):
