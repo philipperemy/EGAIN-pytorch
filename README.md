@@ -1,6 +1,6 @@
 # Generative Adversarial Imputation Networks (GAIN)
 
-Pytorch implementation
+Pytorch implementation of EGAIN, an extension of GAIN.
 
 Refer to this [link](https://github.com/jsyoon0823/GAIN) for the official implementation in Tensorflow V1.
 
